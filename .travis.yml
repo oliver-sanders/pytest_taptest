@@ -1,0 +1,12 @@
+cache: pip
+language: python
+dist: xenial
+python: "3.7"
+
+install:
+  - pip install pytest pycodestyle
+  - pip install -e .
+
+script:
+  - pytest
+  - pycodestyle .
