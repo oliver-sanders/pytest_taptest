@@ -1,15 +1,19 @@
+"""End to end test of some executable scripts."""
 import shlex
 import subprocess
 
 from pytest import main
 
 
+# tap parsers to trial
 PARSER_CMDS = {
     'prove': 'prove --exec cat',
     'tappy': 'tappy'
 }
 
+# test scipts to run
 TESTS = {
+    # filename: 0=pass 1=fail
     'test/good.t': 0,
     'test/bad.t': 1,
     'test/ugly.t': 1

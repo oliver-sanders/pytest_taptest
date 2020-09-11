@@ -1,8 +1,8 @@
 ``pytest_taptest``
 ==================
 
-.. image :: https://travis-ci.org/oliver-sanders/pytest_taptest.svg?branch=master
-   :target: https://travis-ci.org/oliver-sanders/pytest_taptest
+.. image:: https://github.com/oliver-sanders/pytest_taptest/workflows/test/badge.svg
+   :target: https://github.com/oliver-sanders/pytest_taptest/actions?query=workflow%3Atest
 
 .. _Prove: https://perldoc.perl.org/prove.html
 .. _pytest-tap: https://pypi.org/project/pytest-tap/
@@ -50,10 +50,17 @@ Configuration
 
 Configure as CLI options as regular ``pytest`` options e.g:
 
-*``pytest.ini``*
+``pytest.ini``
 
 .. code-block:: ini
 
    [pytest]
    addopts =
        --tap-test-scripts='*.t'
+
+
+Related Projects
+----------------
+
+* `pytest-tap`_
+* `Prove`_

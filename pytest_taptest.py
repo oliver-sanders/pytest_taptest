@@ -1,4 +1,5 @@
 """Simple pytest extension for running tests which output TAP files."""
+import os
 from subprocess import Popen, PIPE, STDOUT
 import shlex
 from tempfile import NamedTemporaryFile
@@ -39,10 +40,18 @@ def pytest_addoption(parser):
 def get_environment(script):
     """Source the given script, return a dictionary of the resulting env."""
     out = Popen(
-        '( . %s; /usr/bin/printenv -0 )' % script, stdout=PIPE, shell=True
+        '( . %s; /usr/bin/env )' % script, stdout=PIPE, shell=True
     ).communicate()[0]
-    return dict(
-        line.decode().split('=', 1) for line in out.split(b'\x00') if line)
+    env = dict(
+        line.decode().split('=', 1)
+        for line in out.splitlines()
+        if line
+    )
+    return {
+        key: value
+        for key, value in env.items()
+        if os.environ.get(key, None) != value
+    }
 
 
 def pytest_collectstart(collector):
@@ -56,8 +65,7 @@ def pytest_collectstart(collector):
 def pytest_collect_file(parent, path):
     """Determine which files to test."""
     if any(path.check(fnmatch=glob) for glob in TEST_GLOBALS['patterns']):
-        return TAPTestFile(path, parent)
-    return None
+        return TAPTestFile.from_parent(parent, fspath=path)
 
 
 class TAPTestFile(pytest.File):
@@ -65,7 +73,7 @@ class TAPTestFile(pytest.File):
 
     def collect(self):
         """Yield test items, there is a 1-1 mapping between files and tests."""
-        yield TAPTestItem(self.fspath, self)
+        yield TAPTestItem.from_parent(self, fspath=self.fspath)
 
 
 class TAPTestFailure(Exception):
@@ -88,9 +96,9 @@ class TAPTestItem(pytest.Item):
 
     """
 
-    def __init__(self, test_file, parent):
+    def __init__(self, parent, fspath=None):
         pytest.Item.__init__(self, 'TAP', parent)
-        self.test_file = test_file
+        self.fspath = fspath
 
     def runtest(self):
         """Execute the test file and run the TAP parser over it."""
@@ -98,8 +106,11 @@ class TAPTestItem(pytest.Item):
 
         # generate TAP file
         tap_file = NamedTemporaryFile()
-        proc = Popen([self.test_file], env=TEST_GLOBALS.get('env'),
-                     stdout=tap_file, stderr=PIPE)
+        try:
+            proc = Popen([self.fspath], env=TEST_GLOBALS.get('env'),
+                         stdout=tap_file, stderr=PIPE)
+        except Exception as exc:
+            raise TAPTestFailure({'error': str(exc)})
         ret = proc.wait()
         tap_file.seek(0)
         files = {
@@ -130,11 +141,9 @@ class TAPTestItem(pytest.Item):
                 (i.e. an expected failure).
 
         """
-        ret = None
         if isinstance(excinfo.value, TAPTestFailure):
-            ret = str(excinfo.value)
-        return ret
+            return str(excinfo.value)
 
     def reportinfo(self):
         """Return the test identifier as it should appear in pytest output."""
-        return self.fspath, 0, self.fspath
+        return self.fspath, 0, str(self.fspath)

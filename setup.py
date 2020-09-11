@@ -1,5 +1,17 @@
 from setuptools import setup
 
+install_requires = [
+    'pytest'
+]
+tests_require = [
+    'flake8',
+    'pytest-tap'
+]
+extra_requires = {
+    'all': tests_require
+}
+
+
 setup(
     name='pytest-taptest',
     description='Run tests which produce output in the TAP format',
@@ -12,5 +24,7 @@ setup(
             'pytest_taptest = pytest_taptest',
         ]
     },
-    install_requires=['py>=1.8.0'],
+    install_requires=install_requires,
+    tests_require=tests_require,
+    extras_require=extra_requires,
 )

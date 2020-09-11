@@ -1,0 +1,12 @@
+# compiled python files
+*.py[cod]
+__pycache__/
+
+# vim backup files
+*.swp
+
+# emacs backup files
+*~
+
+# vscode
+.vscode
